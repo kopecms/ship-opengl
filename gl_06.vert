@@ -19,7 +19,7 @@ void main()
 	vec3 position2;
 	if(water)
 	{
-		position2 = vec3(position.x,sin(time*2*3.14/period+2*3.14/length+position.x),position.z);
+		position2 = vec3(position.x,sin(time*2*3.14/period-2*3.14/length*position.x+position.x),position.z);
     }
 	else
 	{
