@@ -11,6 +11,7 @@ private:
 	float p = 0.001;
 public:
 	
+	float stereAngel = 0;
 
 	bool isWater = false;
 	float waveLength = 10;

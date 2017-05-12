@@ -14,6 +14,12 @@ using namespace std;
 #include "SkyBox.h"
 #include "Water.h"
 #include "Keyboard.h"
+#include "Cylinder.h"
+#include "Circle.h"
+
+#define PI 3.14
+
+Keyboard k;
 
 const GLuint WIDTH = 800, HEIGHT = 600;
 
@@ -30,6 +36,8 @@ glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 // Deltatime
 GLfloat deltaTime = 0.0f;	// Time between current frame and last frame
 GLfloat lastFrame = 0.0f;  	// Time of last frame
+void DrawStere(Circle& circle, Cylinder *cylinders, Textures *t, int n, const glm::mat4& trans, GLuint modelLoc);
+void DrawStereBack(CubeModel& cube, Cylinder *cylinders, Textures *t, const glm::mat4&  transOrginal, GLuint modelLoc);
 
 int main()
 {
@@ -62,12 +70,22 @@ int main()
 		// Build, compile and link shader program
 		ShaderProgram theProgram("gl_06.vert", "gl_06.frag");
 		// Set up cube model
+
 		CubeModel cube(1.0f);
 		SkyBox sky(100.0f);
 		Water sea(50.0f,1000);
 
+		Cylinder cylinders[7];
+		for (int i = 0; i < 4;++i)
+			cylinders[i].set(0.1, 0.1, 2, 100);
+		cylinders[4].set(0.5,0.5,0.3,40);	
+		cylinders[5].set(0.3,0.6,1,40);
+		// stere back
+		cylinders[6].set(0.5, 0.4, 2, 40);
+		Circle circle(2, 2, 1.8, 0.1, 80);
+		CubeModel backStere(1.0f);
+
 		Textures *t = Textures::getInstance();
-		Keyboard k;
 		
 		glEnable(GL_DEPTH_TEST); // let's use z-buffer
 
@@ -108,7 +126,7 @@ int main()
 			glm::mat4 projection = glm::perspective(45.0f, (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 100.0f);
 			glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
-			GLfloat radius = 6.0f;
+			GLfloat radius = 14.0f;
 			camX = sin(k.xRotation) * radius;
 			camZ = cos(k.xRotation) * radius;
 
@@ -116,22 +134,36 @@ int main()
 			glm::mat4 view;
 			//view = glm::lookAt(cameraPos, glm::vec3(0.0, 0.0, 0.0), cameraUp);
 
-			view = glm::lookAt(glm::vec3(camX,2.0f, camZ), glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+			view = glm::lookAt(glm::vec3(camX,10.0f, camZ), glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
 			glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
 			//t->setTexture("weiti");
 			glm::mat4 trans;
 			//cube.Draw(trans, modelLoc);
+
+			t->setTexture("weiti");
+			t->setTexture("weiti");
+
+			DrawStere(circle, cylinders, t, 4, trans, modelLoc);
+			DrawStereBack(backStere, cylinders, t, trans, modelLoc);
+			
+			/*
+
+
 			t->setTexture("skybox");
 			sky.Draw(trans, modelLoc);
-
+*/
 			k.isWater = true;
 			glUniform1f(water, k.isWater);
 
 			t->setTexture("water");
 			sea.Draw(trans, modelLoc);
 			// Swap the screen buffers
+			
+			
+			
 			glfwSwapBuffers(window);
+			
 		}
 	}
 	catch (exception ex)
@@ -141,4 +173,37 @@ int main()
 	glfwTerminate();
 
 	return 0;
+}
+
+void DrawStere(Circle& circle, Cylinder *cylinders, Textures *t, int n,const glm::mat4& transOrginal, GLuint modelLoc){
+	glm::mat4 trans = transOrginal;
+	glm::mat4 model = glm::translate(trans, glm::vec3(0.3, 0, 0));
+	model = glm::rotate(model, (float)(PI / 2), glm::vec3(0, 1, 0));
+	cylinders[4].Draw(model, modelLoc);
+
+	model = glm::translate(trans, glm::vec3(0.5, -1, 0));
+	model = glm::rotate(model, (float)(-PI / 2), glm::vec3(1, 0, 0));
+	cylinders[5].Draw(model, modelLoc);
+
+	trans = glm::rotate(trans, (float)(k.stereAngel), glm::vec3(1, 0, 0));
+
+	model = glm::rotate(trans, (float)(PI / 2), glm::vec3(0, 1, 0));
+	circle.Draw(model, modelLoc);
+	for (int i = 0; i < n; ++i){
+		glm::mat4& model = glm::rotate(trans, (float)(i*1.0 / n*PI), glm::vec3(1, 0, 0));
+		cylinders[i].Draw(model, modelLoc);
+	}
+}
+
+void DrawStereBack(CubeModel& cube, Cylinder *cylinders, Textures *t,const glm::mat4&  transOrginal, GLuint modelLoc){
+	glm::mat4 trans = transOrginal;
+	glm::mat4 model = glm::translate(trans, glm::vec3(4, -1, 0));
+	model = glm::rotate(model, (float)(PI / 2), glm::vec3(1, 0, 0));
+	cylinders[6].Draw(model, modelLoc);
+
+	model = glm::translate(trans, glm::vec3(4.5, -3, 0));
+	model = glm::rotate(model, (k.stereAngel), glm::vec3(0, 1, 0));
+	//model = glm::translate(model, glm::vec3(cos(k.stereAngel),sin(k.stereAngel), 0));
+	model = glm::scale(model, glm::vec3(2, 2, 0.2));
+	cube.Draw(model, modelLoc);
 }

@@ -23,6 +23,13 @@ void Keyboard::doMovement(GLfloat deltaTime){
 	if (keys[GLFW_KEY_K])
 		wavePeriod += p;
 
+	//stere
+
+	if (keys[GLFW_KEY_Z])
+		stereAngel += p;
+	if (keys[GLFW_KEY_C])
+		stereAngel -= p;
+
 
 	// Camera controls
 	GLfloat cameraSpeed = 25.0f * deltaTime;
