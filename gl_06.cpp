@@ -16,7 +16,7 @@ using namespace std;
 #include "Keyboard.h"
 #include "Cylinder.h"
 #include "Circle.h"
-
+#include "Ship.h"
 #define PI 3.14
 
 Keyboard k;
@@ -38,7 +38,7 @@ GLfloat deltaTime = 0.0f;	// Time between current frame and last frame
 GLfloat lastFrame = 0.0f;  	// Time of last frame
 void DrawStere(Circle& circle, Cylinder *cylinders, Textures *t, int n, const glm::mat4& trans, GLuint modelLoc);
 void DrawStereBack(CubeModel& cube, Cylinder *cylinders, Textures *t, const glm::mat4&  transOrginal, GLuint modelLoc);
-
+void DrawShip(Ship &ship,Circle& circle, CubeModel& cube, Cylinder *cylinders, Textures *t, int n, const glm::mat4& trans, GLuint modelLoc);
 int main()
 {
 	if (glfwInit() != GL_TRUE)
@@ -85,11 +85,15 @@ int main()
 		Circle circle(2, 2, 1.8, 0.1, 80);
 		CubeModel backStere(1.0f);
 
+		Ship ship;
+
 		Textures *t = Textures::getInstance();
 		
 		glEnable(GL_DEPTH_TEST); // let's use z-buffer
 
 		// main event loop
+
+		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		while (!glfwWindowShouldClose(window))
 		{
 			// Calculate deltatime of current frame
@@ -126,7 +130,7 @@ int main()
 			glm::mat4 projection = glm::perspective(45.0f, (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 100.0f);
 			glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
-			GLfloat radius = 14.0f;
+			GLfloat radius = 6.0f;
 			camX = sin(k.xRotation) * radius;
 			camZ = cos(k.xRotation) * radius;
 
@@ -134,7 +138,7 @@ int main()
 			glm::mat4 view;
 			//view = glm::lookAt(cameraPos, glm::vec3(0.0, 0.0, 0.0), cameraUp);
 
-			view = glm::lookAt(glm::vec3(camX,10.0f, camZ), glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+			view = glm::lookAt(glm::vec3(camX,0.5f, camZ), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
 			glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
 			//t->setTexture("weiti");
@@ -143,23 +147,19 @@ int main()
 
 			t->setTexture("weiti");
 			t->setTexture("weiti");
-
-			DrawStere(circle, cylinders, t, 4, trans, modelLoc);
-			DrawStereBack(backStere, cylinders, t, trans, modelLoc);
 			
-			/*
-
+			DrawShip(ship, circle,backStere, cylinders, t, 4, trans, modelLoc);
 
 			t->setTexture("skybox");
 			sky.Draw(trans, modelLoc);
-*/
+
 			k.isWater = true;
 			glUniform1f(water, k.isWater);
 
 			t->setTexture("water");
 			sea.Draw(trans, modelLoc);
-			// Swap the screen buffers
-			
+			/*// Swap the screen buffers
+			*/
 			
 			
 			glfwSwapBuffers(window);
@@ -197,13 +197,29 @@ void DrawStere(Circle& circle, Cylinder *cylinders, Textures *t, int n,const glm
 
 void DrawStereBack(CubeModel& cube, Cylinder *cylinders, Textures *t,const glm::mat4&  transOrginal, GLuint modelLoc){
 	glm::mat4 trans = transOrginal;
-	glm::mat4 model = glm::translate(trans, glm::vec3(4, -1, 0));
+	glm::mat4 model = glm::translate(trans, glm::vec3(0, -.5, -2));
 	model = glm::rotate(model, (float)(PI / 2), glm::vec3(1, 0, 0));
+	model = glm::scale(model, glm::vec3(.3, .3, .3));
 	cylinders[6].Draw(model, modelLoc);
 
-	model = glm::translate(trans, glm::vec3(4.5, -3, 0));
+	
+	model = glm::translate(trans, glm::vec3(0, -1, -2.2));
+
+	model = glm::translate(model, glm::vec3(0, 0, 0.3));
 	model = glm::rotate(model, (k.stereAngel), glm::vec3(0, 1, 0));
-	//model = glm::translate(model, glm::vec3(cos(k.stereAngel),sin(k.stereAngel), 0));
-	model = glm::scale(model, glm::vec3(2, 2, 0.2));
+	model = glm::translate(model, glm::vec3(0, 0, -0.3));
+	model = glm::scale(model, glm::vec3(0.05, 0.6, 0.4));
 	cube.Draw(model, modelLoc);
+}
+
+void DrawShip(Ship & ship,Circle& circle, CubeModel& cube, Cylinder *cylinders, Textures *t, int n, const glm::mat4& transOrginal, GLuint modelLoc){
+	glm::mat4 trans = transOrginal;
+	glm::mat4 model = glm::translate(trans, glm::vec3(0, 0.4, -1));
+	model = glm::scale(model, glm::vec3(.2,.2,.2));
+	model = glm::rotate(model, (float)(-PI / 2), glm::vec3(0, 1, 0));
+	DrawStere(circle, cylinders, t, n, model, modelLoc);
+	model = trans;
+	DrawStereBack(cube, cylinders, t, model, modelLoc);
+
+	ship.Draw(trans, modelLoc);
 }
